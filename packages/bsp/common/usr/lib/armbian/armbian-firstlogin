@@ -210,7 +210,11 @@ set_timezone_and_locales() {
 	PUBLIC_IP=$(curl --max-time 5 -s https://ipinfo.io/ip)
 
 	# Check if we have wireless adaptor
-	WIFI_DEVICE=$(LC_ALL=C nmcli dev status | grep " wifi " 2> /dev/null)
+	if command -v nmcli > /dev/null 2>&1; then
+		WIFI_DEVICE=$(LC_ALL=C nmcli dev status | grep " wifi " 2> /dev/null)
+	elif command -v iw > /dev/null 2>&1; then
+		WIFI_DEVICE=$(LC_ALL=C iw dev | awk '$1=="Interface"{print $2}' 2> /dev/null)
+	fi
 
 	if [ -z "$PUBLIC_IP" ]; then
 
