@@ -14,7 +14,7 @@ IMAGE_PARTITION_TABLE="gpt"
 function post_family_config__tspi_use_radxa_vendor() {
 	display_alert "$BOARD" "Mainline U-Boot overrides for $BOARD - $BRANCH" "info"
 	BOOTDELAY=1
-	BOOTSOURCE="https://github.com/u-boot/u-boot"
+	BOOTSOURCE="https://github.com/jamesho0/u-boot"
 	BOOTBRANCH="tag:v2025.04"
 	BOOTPATCHDIR="v2025.04"
 	BOOTDIR="u-boot-${BOARD}" # do not share u-boot directory
