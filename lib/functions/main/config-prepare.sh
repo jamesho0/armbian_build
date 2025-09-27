@@ -166,7 +166,11 @@ function config_early_init() {
 
 	display_alert "Starting single build process" "${BOARD:-"no BOARD set"}" "info"
 
-	declare -g -a KERNEL_DRIVERS_SKIP=() # Prepare array to be filled in by board/family/extensions
+	# Do not initialize an empty array if it exists.
+	if [ "${KERNEL_DRIVERS_SKIP[*]}" == "" ]; then
+		# Prepare array to be filled in by board/family/extensions
+		declare -g -a KERNEL_DRIVERS_SKIP=()
+	fi
 
 	silent="yes" track_general_config_variables "after config_early_init" # don't log anything, just init the change tracking
 
@@ -300,6 +304,9 @@ function config_post_main() {
 	# Do some sanity checks for userspace stuff, if RELEASE/DESKTOP_ENVIRONMENT is set.
 	check_config_userspace_release_and_desktop
 
+	# late Userspace / package list fixes; RELEASE and DISTRIBUTION must be set.
+	fix_userspace_packages_release_and_distro
+
 	track_general_config_variables "before calling extension_finish_config"
 	display_alert "Extensions: finish configuration" "extension_finish_config" "debug"
 	call_extension_method "extension_finish_config" <<- 'EXTENSION_FINISH_CONFIG'
@@ -378,6 +385,19 @@ function check_config_userspace_release_and_desktop() {
 	fi
 
 	return 0
+}
+
+function fix_userspace_packages_release_and_distro() {
+	display_alert "fix_userspace_packages_release_and_distro" "For distro '${DISTRIBUTION}' release '${RELEASE}'" "debug"
+
+	# Some old hack from the past, not sure if it's still needed. Originally from https://github.com/armbian/build/pull/5881
+	if [[ $RELEASE == trixie || $ARCH == riscv64 ]]; then remove_packages "cpufrequtils"; fi # this will remove from rootfs as well
+
+	# Debian: no need for this package in the rootfs, as it provides add-apt-repository which is not used on our Debian builds
+	if [[ "${DISTRIBUTION}" == "Debian" ]]; then
+		display_alert "Not-installing software-properties-common" "For distro '${DISTRIBUTION}' release '${RELEASE}'" "warn"
+		remove_packages "software-properties-common" "software-properties-gtk" "software-properties-common"
+	fi
 }
 
 # Some utility functions

@@ -9,7 +9,7 @@
 
 function run_tool_oras() {
 	# Default version
-	ORAS_VERSION=${ORAS_VERSION:-0.16.0} # https://github.com/oras-project/oras/releases
+	ORAS_VERSION=${ORAS_VERSION:-1.3.0} # https://github.com/oras-project/oras/releases
 	#ORAS_VERSION=${ORAS_VERSION:-"1.0.0-rc.1"} # https://github.com/oras-project/oras/releases
 
 	declare non_cache_dir="/armbian-tools/oras" # To deploy/reuse cached ORAS in a Docker image.
@@ -52,6 +52,11 @@ function run_tool_oras() {
 			ORAS_ARCH="riscv64"
 			ORAS_VERSION="1.2.0-beta.1" # Only v1.2.0-beta.1+ has risv64 support
 			;;
+		*loongarch64*)
+			ORAS_ARCH="loong64"
+			ORAS_VERSION="1.3.0-beta.3-loong64" # Only v1.3.0-beta.3-loong64+ has loong64 support
+			ORAS_REPO="amazingfate" # This is my fork repo, we can delete it if oras releases official loong64 binary in the future
+			;;
 		*)
 			exit_with_error "unknown arch: $MACHINE"
 			;;
@@ -59,7 +64,7 @@ function run_tool_oras() {
 
 	declare ORAS_FN="oras_${ORAS_VERSION}_${ORAS_OS}_${ORAS_ARCH}"
 	declare ORAS_FN_TARXZ="${ORAS_FN}.tar.gz"
-	declare DOWN_URL="${GITHUB_SOURCE:-"https://github.com"}/oras-project/oras/releases/download/v${ORAS_VERSION}/${ORAS_FN_TARXZ}"
+	declare DOWN_URL="${GITHUB_SOURCE:-"https://github.com"}/${ORAS_REPO:-"oras-project"}/oras/releases/download/v${ORAS_VERSION}/${ORAS_FN_TARXZ}"
 	declare ORAS_BIN="${DIR_ORAS}/${ORAS_FN}"
 	declare ACTUAL_VERSION
 
@@ -81,9 +86,11 @@ function run_tool_oras() {
 	fi
 
 	# Run oras, possibly with retries...
+	declare ORAS_HOME="${HOME:-"${TMPDIR}"}" # oras _requires_ a HOME to work atleast in 1.2+
+	display_alert "Running ORAS ${ACTUAL_VERSION}" "HOME='${ORAS_HOME}'; retries='${retries:-1}'; cmdline: $*" "debug"
 	if [[ "${retries:-1}" -gt 1 ]]; then
 		display_alert "Calling ORAS with retries ${retries}" "$*" "debug"
-		sleep_seconds="30" do_with_retries "${retries}" "${ORAS_BIN}" "$@"
+		sleep_seconds="30" do_with_retries "${retries}" env -i "HOME=${ORAS_HOME}" "HTTPS_PROXY=${HTTPS_PROXY}" "${ORAS_BIN}" "$@"
 	else
 		# If any parameters passed, call ORAS, otherwise exit. We call it this way (sans-parameters) early to prepare ORAS tooling.
 		if [[ $# -eq 0 ]]; then
@@ -92,7 +99,7 @@ function run_tool_oras() {
 		fi
 
 		display_alert "Calling ORAS" "$*" "debug"
-		"${ORAS_BIN}" "$@"
+		env -i "HOME=${ORAS_HOME}" "${ORAS_BIN}" "$@"
 	fi
 }
 

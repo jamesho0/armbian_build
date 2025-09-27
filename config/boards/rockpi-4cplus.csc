@@ -3,13 +3,14 @@ BOARD_NAME="Rockpi 4C+"
 BOARDFAMILY="rockchip64"
 BOARD_MAINTAINER=""
 KERNEL_TARGET="current,edge"
+KERNEL_TEST_TARGET="current"
 FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
 
 BOOTBRANCH_BOARD="tag:v2024.01"
 BOOTPATCHDIR="v2024.01"
 BOOTCONFIG="rock-4c-plus-rk3399_defconfig"
-BOOT_SCENARIO="spl-blobs"
+BOOT_SCENARIO="binman-atf-mainline"
 BOOT_SUPPORT_SPI=yes
 
 DDR_BLOB="rk33/rk3399_ddr_933MHz_v1.30.bin"

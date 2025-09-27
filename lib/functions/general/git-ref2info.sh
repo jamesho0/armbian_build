@@ -89,8 +89,8 @@ function memoized_git_ref_to_info() {
 				else \
 					. + [{\"source\": \$source, \"branch\": \$branch, \"sha1\": \$sha1}] \
 				end" /dev/fd/5 >&6
-			cat /dev/fd/6 >"${SRC}"/output/info/git_sources.json
-		} 5<>"${SRC}"/output/info/git_sources.json 6<>"${SRC}"/output/info/git_sources.json.new
+			cat /dev/fd/6 > "${SRC}"/output/info/git_sources.json
+		} 5<> "${SRC}"/output/info/git_sources.json 6<> "${SRC}"/output/info/git_sources.json.new
 	fi
 
 	if [[ -f "${SRC}"/config/sources/git_sources.json && ${ref_type} == "branch" ]]; then
@@ -118,9 +118,23 @@ function memoized_git_ref_to_info() {
 					url="${git_source}/plain/Makefile?h=${sha1}"
 					;;
 
-				"https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux-stable" | "https://mirrors.tuna.tsinghua.edu.cn/git/linux-stable.git" | "https://mirrors.bfsu.edu.cn/git/linux-stable.git")
+				"https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux-stable.git" | "https://mirrors.tuna.tsinghua.edu.cn/git/linux-stable.git" | "https://mirrors.bfsu.edu.cn/git/linux-stable.git")
 					# for mainline kernel source, only the origin source support curl
-					url="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/plain/Makefile?h=${sha1}"
+					case "${GITHUB_MIRROR}" in
+						"ghproxy")
+							url="https://${GHPROXY_ADDRESS}/https://raw.githubusercontent.com/torvalds/linux/${sha1}/Makefile"
+							;;
+						*)
+							url="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/plain/Makefile?h=${sha1}"
+							;;
+					esac
+					;;
+
+				"https://gitverse.ru/"*)
+					declare org_and_repo=""
+					org_and_repo="$(echo "${git_source}" | cut -d/ -f4-5)"
+					org_and_repo="${org_and_repo%.git}" # remove .git if present
+					url="https://gitverse.ru/api/repos/${org_and_repo}/raw/commit/${sha1}/Makefile"
 					;;
 
 				"https://gitee.com/"*)

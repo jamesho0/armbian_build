@@ -61,7 +61,6 @@ i3-wm
 suckless-tools
 indicator-printers
 inputattach
-kerneloops
 keyutils
 language-pack-en
 laptop-detect
@@ -79,9 +78,8 @@ libgsettings-qt1
 libjson-xs-perl
 libnotify-bin
 libproxy1-plugin-gsettings
-libproxy1-plugin-networkmanager
 libu2f-udev
-libwmf0.2-7-gtk
+libwmf-0.2-7-gtk
 libxcb-cursor0
 libxcursor1
 lightdm
@@ -90,8 +88,6 @@ lightdm-gtk-greeter-settings
 lightdm-settings
 lxappearance
 mousetweaks
-network-manager-openvpn-gnome
-network-manager-vpnc
 nitrogen
 numix-gtk-theme
 openprinting-ppds

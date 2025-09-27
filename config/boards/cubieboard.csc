@@ -4,8 +4,8 @@ BOARDFAMILY="sun4i"
 BOARD_MAINTAINER=""
 BOOTCONFIG="Cubieboard_config"
 HAS_VIDEO_OUTPUT="no"
-KERNEL_TARGET="legacy,current,edge"
-KERNEL_TEST_TARGET="edge"
+KERNEL_TARGET="current,edge,legacy"
+KERNEL_TEST_TARGET="current"
 MODULES_BLACKLIST="ir_lirc_codec lirc_dev sunxi-cir"
 
 function post_config_uboot_target__extra_configs_for_cubieboard() {

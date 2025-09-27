@@ -9,7 +9,8 @@ DEFAULT_OVERLAYS="usbhost1 usbhost2"
 DEFAULT_CONSOLE="serial"
 SERIALCON="ttyS0,ttyGS0"
 HAS_VIDEO_OUTPUT="no"
-KERNEL_TARGET="legacy,current,edge"
+KERNEL_TARGET="current,edge,legacy"
+KERNEL_TEST_TARGET="current"
 CRUSTCONFIG="h5_defconfig"
 
 function post_config_uboot_target__extra_configs_for_nanopi_neo_plus2() {

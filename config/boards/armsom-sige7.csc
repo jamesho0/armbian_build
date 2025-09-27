@@ -1,10 +1,9 @@
 # Rockchip RK3588 SoC octa core 8-64GB SoC 2*2.5GBe eMMC USB3 NvME WIFI
 BOARD_NAME="ArmSoM Sige7"
 BOARDFAMILY="rockchip-rk3588"
-BOARD_MAINTAINER="Z-Keven"
+BOARD_MAINTAINER=""
 BOOTCONFIG="armsom-sige7-rk3588_defconfig"
-KERNEL_TARGET="legacy,vendor,edge,collabora"
-KERNEL_TEST_TARGET="legacy" # in case different then kernel target
+KERNEL_TARGET="current,edge,vendor"
 FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
 BOOT_FDT_FILE="rockchip/rk3588-armsom-sige7.dtb"
@@ -12,6 +11,8 @@ BOOT_SCENARIO="spl-blobs"
 BOOT_SUPPORT_SPI="yes"
 BOOT_SPI_RKSPI_LOADER="yes"
 IMAGE_PARTITION_TABLE="gpt"
+
+# @TODO: consider removing those, as the defaults in rockchip64_common have been bumped up
 DDR_BLOB='rk35/rk3588_ddr_lp4_2112MHz_lp5_2736MHz_v1.11.bin'
 BL31_BLOB='rk35/rk3588_bl31_v1.38.elf'
 

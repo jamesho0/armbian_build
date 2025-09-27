@@ -18,7 +18,7 @@ function obtain_and_check_host_release_and_arch() {
 
 	case "${HOSTARCH}" in
 		amd64 | arm64) ;; # officially supported
-		armhf | riscv64)  # experimental
+		armhf | riscv64 | loong64)  # experimental
 			display_alert "EXPERIMENTAL build host support" "${HOSTARCH}" "wrn"
 			;;
 		*)
@@ -33,7 +33,7 @@ function obtain_and_check_host_release_and_arch() {
 	#
 	# NO_HOST_RELEASE_CHECK overrides the check for a supported host system
 	# Disable host OS check at your own risk. Any issues reported with unsupported releases will be closed without discussion
-	if [[ -z $HOSTRELEASE || "bookworm trixie sid jammy kinetic lunar vanessa vera victoria mantic noble" != *"$HOSTRELEASE"* ]]; then
+	if [[ -z $HOSTRELEASE || "bookworm trixie sid jammy kinetic lunar vanessa vera victoria virginia wilma mantic noble" != *"$HOSTRELEASE"* ]]; then
 		if [[ $NO_HOST_RELEASE_CHECK == yes ]]; then
 			display_alert "You are running on an unsupported system" "${HOSTRELEASE:-(unknown)}" "wrn"
 			display_alert "Do not report any errors, warnings or other issues encountered beyond this point" "" "wrn"

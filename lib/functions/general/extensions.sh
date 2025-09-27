@@ -465,6 +465,8 @@ function enable_extension() {
 
 	# there are many opportunities here. too many, actually. let userpatches override just some functions, etc.
 	for extension_base_path in "${USERPATCHES_PATH}/extensions" "${SRC}/extensions"; do
+		[[ -d "${extension_base_path}" ]] || continue
+
 		extension_dir="${extension_base_path}/${extension_name}"
 		extension_file_in_dir="${extension_dir}/${extension_name}.sh"
 		extension_floating_file="${extension_base_path}/${extension_name}.sh"
@@ -476,6 +478,14 @@ function enable_extension() {
 			extension_dir="${extension_base_path}" # this is misleading. only directory-based extensions should have this.
 			extension_file="${extension_floating_file}"
 			break
+		else
+			# Search for the extension file in any subdirectory
+			extension_file=$(find "${extension_base_path}" -type f -name "${extension_name}.sh" | head -n 1) # Example format: extensions/network/net-network-manager.sh
+			if [[ -n "${extension_file}" ]]; then
+				# Extract extension dir from file, e.g. from "extensions/network/net-network-manager.sh" the dir "extensions/network/" gets extracted
+				extension_dir="${extension_file%/*}"
+				break
+			fi
 		fi
 	done
 
@@ -535,6 +545,46 @@ function enable_all_extensions_builtin_and_user() {
 			declare -a ext_list_dir=()
 			mapfile -t ext_list_dir < <(find "${ext_dir}" -maxdepth 2 -type f -name "*.sh")
 			extension_list+=("${ext_list_dir[@]}")
+		fi
+	done
+
+	# loop over the files found; remove the prefix
+	for extension_file in "${extension_list[@]}"; do
+		extension_file="${extension_file#${SRC}/}"
+		extension_file="${extension_file%.sh}"
+		extension_name="${extension_file##*/}"
+		# skip, if extension_name is in the ignore_extensions array
+		if [[ " ${ignore_extensions[*]} " == *" ${extension_name} "* ]]; then
+			continue
+		fi
+		# enable the extensions, quietly.
+		enable_extension_quiet="yes" enable_extension "${extension_name}"
+	done
+}
+
+# This looks up and enables extensions containing function hooks passed in as arguments.
+# The reasoning is simple: during Dockerfile build, we wanna have all the hostdeps defined, even if we're not gonna use them.
+function enable_extensions_with_hostdeps_builtin_and_user() {
+	declare -a searched_hook_names=("${@}") #eg: "add_host_dependencies" "host_dependencies_known"
+	declare -a grep_args=()
+	for hook_name in "${searched_hook_names[@]}"; do
+		grep_args+=("-e" "^function ${hook_name}__")
+	done
+
+	declare -a extension_list=()
+	declare -a ext_dirs=("${SRC}/extensions" "${USERPATCHES_PATH}/extensions")
+	declare -a ignore_extensions=("sample-extension")
+
+	# Extensions are files of the format <dir>/extension_name.sh or <dir>/extension_name/extension_name.sh
+	for ext_dir in "${ext_dirs[@]}"; do
+		display_alert "Extension search" "Searching in directory: \"${ext_dir}\"" ""
+		if [[ -d "${ext_dir}" ]]; then
+			declare -a ext_list_dir=()
+			mapfile -t ext_list_dir < <(find "${ext_dir}" -maxdepth 2 -type f -name "*.sh" -print0 | xargs -0 -r grep -l "${grep_args[@]}" 2>/dev/null || true)
+			display_alert "Extension search result" "Found ${#ext_list_dir[@]} extensions in \"${ext_dir}\"" ""
+			extension_list+=("${ext_list_dir[@]}")
+		else
+			display_alert "Extension search" "Directory does not exist: \"${ext_dir}\"" "wrn"
 		fi
 	done
 

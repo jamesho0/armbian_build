@@ -57,7 +57,6 @@ gvfs-backends
 hplip
 indicator-printers
 inputattach
-kerneloops
 keyutils
 language-pack-gnome-de
 language-pack-gnome-en
@@ -81,14 +80,13 @@ libgsettings-qt1
 libgtk2.0-bin
 libnotify-bin
 libproxy1-plugin-gsettings
-libproxy1-plugin-networkmanager
-libwmf0.2-7-gtk
+libwmf-0.2-7-gtk
 libxcursor1
 lightdm
 lightdm-settings
 lxtask
 mate-accessibility-profiles
-mate-applet-appmenu
+#mate-applet-appmenu
 mate-applet-brisk-menu
 mate-applets
 mate-applets-common
@@ -130,7 +128,7 @@ mate-sensors-applet-common
 mate-session-manager
 mate-settings-daemon
 mate-settings-daemon-common
-mate-sntray-plugin
+#mate-sntray-plugin
 mate-system-monitor
 mate-system-monitor-common
 mate-terminal
@@ -149,10 +147,6 @@ mate-window-title-applet
 mesa-utils
 mousepad
 mousetweaks
-network-manager-config-connectivity-ubuntu
-network-manager-openvpn
-network-manager-ssh
-network-manager-vpnc
 numix-gtk-theme
 numix-icon-theme
 numix-icon-theme-circle
@@ -162,7 +156,6 @@ pamix
 pasystray
 pavucontrol
 pavucontrol-qt
-pavumeter
 printer-driver-all
 profile-sync-daemon
 pulseaudio-module-bluetooth

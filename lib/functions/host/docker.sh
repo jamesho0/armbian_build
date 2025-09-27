@@ -121,8 +121,7 @@ function docker_cli_prepare() {
 	# declare -g DOCKER_ARMBIAN_BASE_IMAGE="${DOCKER_ARMBIAN_BASE_IMAGE:-"debian:trixie"}"
 	# declare -g DOCKER_ARMBIAN_BASE_IMAGE="${DOCKER_ARMBIAN_BASE_IMAGE:-"debian:bookworm"}"
 	# declare -g DOCKER_ARMBIAN_BASE_IMAGE="${DOCKER_ARMBIAN_BASE_IMAGE:-"debian:sid"}"
-	# declare -g DOCKER_ARMBIAN_BASE_IMAGE="${DOCKER_ARMBIAN_BASE_IMAGE:-"ubuntu:kinetic"}"
-	declare -g DOCKER_ARMBIAN_BASE_IMAGE="${DOCKER_ARMBIAN_BASE_IMAGE:-"ubuntu:jammy"}"
+	declare -g DOCKER_ARMBIAN_BASE_IMAGE="${DOCKER_ARMBIAN_BASE_IMAGE:-"ubuntu:noble"}"
 	declare -g DOCKER_ARMBIAN_TARGET_PATH="${DOCKER_ARMBIAN_TARGET_PATH:-"/armbian"}"
 
 	declare wanted_os_tag="${DOCKER_ARMBIAN_BASE_IMAGE%%:*}"
@@ -225,6 +224,7 @@ function docker_cli_prepare_dockerfile() {
 		!/VERSION
 		!/LICENSE
 		!/compile.sh
+		!/requirements.txt
 		!/lib
 		!/extensions
 		!/config/sources
@@ -247,12 +247,14 @@ function docker_cli_prepare_dockerfile() {
 	# initialize the extension manager; enable all extensions; only once..
 	if [[ "${docker_prepare_cli_skip_exts:-no}" != "yes" ]]; then
 		display_alert "Docker launcher" "enabling all extensions looking for Docker dependencies" "info"
-		enable_all_extensions_builtin_and_user
+		declare -i seconds_before_extensions=$SECONDS
+		enable_extensions_with_hostdeps_builtin_and_user "add_host_dependencies" "host_dependencies_known"
 		initialize_extension_manager
+		display_alert "Docker launcher" "enabled extensions in $((SECONDS - seconds_before_extensions)) seconds" "debug"
 	fi
 	declare -a -g host_dependencies=()
 
-	host_release="${DOCKER_WANTED_RELEASE}" early_prepare_host_dependencies
+	host_release="${DOCKER_WANTED_RELEASE}" early_prepare_host_dependencies # hooks: add_host_dependencies // host_dependencies_known
 	display_alert "Pre-game host dependencies for host_release '${DOCKER_WANTED_RELEASE}'" "${host_dependencies[*]}" "debug"
 
 	# This includes apt install equivalent to install_host_dependencies()
@@ -407,6 +409,13 @@ function docker_cli_prepare_launch() {
 		"--env" "GITHUB_SHA=${GITHUB_SHA}"
 		"--env" "GITHUB_WORKFLOW=${GITHUB_WORKFLOW}"
 		"--env" "GITHUB_WORKSPACE=${GITHUB_WORKSPACE}"
+
+		# Pass proxy args
+ 		"--env" "http_proxy=${http_proxy:-${HTTP_PROXY}}"
+ 		"--env" "https_proxy=${https_proxy:-${HTTPS_PROXY}}"
+ 		"--env" "HTTP_PROXY=${HTTP_PROXY}"
+		"--env" "HTTPS_PROXY=${HTTPS_PROXY}"
+		"--env" "APT_PROXY_ADDR=${APT_PROXY_ADDR}"
 	)
 
 	# This env var is used super early (in entrypoint.sh), so set it as an env to current value.
@@ -459,6 +468,8 @@ function docker_cli_prepare_launch() {
 		DOCKER_ARGS+=("--mount" "type=bind,source=${GITHUB_STEP_SUMMARY},target=${GITHUB_STEP_SUMMARY}")
 		DOCKER_ARGS+=("--env" "GITHUB_STEP_SUMMARY=${GITHUB_STEP_SUMMARY}")
 
+	fi
+	if [[ "${CI}" == "true" ]]; then
 		# For pushing/pulling from OCI/ghcr.io; if OCI_TARGET_BASE is set:
 		# - bind-mount the Docker config file (if it exists)
 		if [[ -n "${OCI_TARGET_BASE}" ]]; then
@@ -466,7 +477,7 @@ function docker_cli_prepare_launch() {
 			DOCKER_ARGS+=("--env" "OCI_TARGET_BASE=${OCI_TARGET_BASE}")
 		fi
 
-		# Mount the Docker config file (if it exists) -- always, even if OCI_TARGET_BASE is not set; @TODO: why only in GitHub actions?
+		# Mount the Docker config file (if it exists) -- always, even if OCI_TARGET_BASE is not set;
 		local docker_config_file_host="${HOME}/.docker/config.json"
 		local docker_config_file_docker="/root/.docker/config.json" # inside Docker
 		if [[ -f "${docker_config_file_host}" ]]; then
@@ -569,12 +580,20 @@ function docker_cli_launch() {
 		run_host_command_logged find "${SRC}/userpatches" -name ".DS_Store" -type f -delete "||" true
 	fi
 
+	# This check is performed in order to set up the host so that it has a loop device, as calling losetup inside of
+	# docker creates a loop device but does not make it available to the already running container
+	# The amount of privileges and capabilities given is a bare minimum needed for losetup to work
+	if [[ ! -e /dev/loop0 ]]; then
+		display_alert "Running losetup in a temporary container" "because no loop devices exist" "info"
+		run_host_command_logged docker run --rm --privileged --cap-add=MKNOD "${DOCKER_ARMBIAN_INITIAL_IMAGE_TAG}" /usr/sbin/losetup -f
+	fi
+
 	display_alert "-----------------Relaunching in Docker after ${SECONDS}s------------------" "here comes the 🐳" "info"
 
 	local -i docker_build_result
 	if docker run "${DOCKER_ARGS[@]}" "${DOCKER_ARMBIAN_INITIAL_IMAGE_TAG}" /bin/bash "${DOCKER_ARMBIAN_TARGET_PATH}/compile.sh" "${ARMBIAN_CLI_FINAL_RELAUNCH_ARGS[@]}"; then
 		docker_build_result=$? # capture exit code of test done in the line above.
-		display_alert "-------------Docker run finished after ${SECONDS}s------------------------" "🐳 successfull" "info"
+		display_alert "-------------Docker run finished after ${SECONDS}s------------------------" "🐳 successful" "info"
 	else
 		docker_build_result=$? # capture exit code of test done 4 lines above.
 		# No use polluting GHA/CI with notices about Docker failure (real failure, inside Docker, generated enough errors already) skip_ci_special="yes"
