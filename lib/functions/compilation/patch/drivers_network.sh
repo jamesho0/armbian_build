@@ -34,6 +34,16 @@ function driver_generic_bring_back_ipx() {
 	fi
 }
 
+driver_wifi_injection() {
+	# - Apply driver-level fixes for monitor/injection path for 6.12 series
+	# - Add compatibility shims for cfg80211/mac80211 where API changed in 6.12
+	# - Add Kconfig option and module parameter notes for enabling injection
+	if linux-version compare "${version}" ge 6.12; then
+                display_alert "Adding" "Enables Wi-Fi packet injection and monitor-mode tweaks" "info"
+                process_patch_file "${SRC}/patch/misc/wireless-injection-6.12.patch" "applying"
+	fi
+}
+
 driver_rtl8189ES() {
 
 	# Wireless drivers for Realtek 8189ES chipsets
@@ -432,7 +442,7 @@ driver_rtl88x2cs() {
 	if linux-version compare "${version}" ge 5.9 && [[ "$LINUXFAMILY" == meson64 ]]; then
 
 		# Attach to specific commit (track branch:tune_for_jethub)
-		local rtl88x2csver='commit:0ef9ddd619d2a386df90fd7c32b65958b0d675ed' # Commit date: Aug 30, 2025 (please update when updating commit ref)
+		local rtl88x2csver='commit:79884dd23267e6e9ec29546476d8f68a1442d180' # Commit date: Oct 09, 2025 (please update when updating commit ref)
 
 		display_alert "Adding" "Wireless drivers for Realtek 88x2cs chipsets ${rtl88x2csver}" "info"
 
